@@ -93,7 +93,7 @@ namespace VerificationsService.Repository
 
         public async Task RemoveALLFailedVerifications()
         {
-            DateTime currentTime = DateTime.Now;
+            DateTime currentTime = DateTime.Now.AddMinutes(-10);
             List<Challenge> expiredChallenges = await _context.Challenges.Where(c => c.ExpiresAt < currentTime).ToListAsync();
 
             foreach (Challenge challenge in expiredChallenges)
