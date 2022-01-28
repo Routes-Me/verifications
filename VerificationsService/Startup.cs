@@ -18,6 +18,7 @@ using VerificationsService.Models.Common;
 using VerificationsService.Models.DBModel;
 using VerificationsService.Repository;
 using VerificationsService.Service;
+using VerificationsService.Service.CronJobService.CronJobMethods;
 
 namespace VerificationsService
 {
@@ -46,10 +47,25 @@ namespace VerificationsService
             services.AddScoped<IVerificationsRepository, VerificationsRepository>();
             services.AddScoped<IVerificationService,VerificationService>();
             services.AddScoped<ITokenService, TokenService>();
+
+            services.AddApiVersioning(config =>
+            {
+                config.DefaultApiVersion = new ApiVersion(1, 0);
+                config.AssumeDefaultVersionWhenUnspecified = true;
+                config.ReportApiVersions = true;
+            });
+
+             services.AddCronJob<ClearVerifications>(c =>
+            {
+                c.TimeZoneInfo = TimeZoneInfo.Local;
+                c.CronExpression = @"22 11 * * *"; // Run every 5 hours
+            });
+            
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "VerificationsService", Version = "v1" });
             });
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

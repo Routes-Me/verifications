@@ -9,6 +9,9 @@ using VerificationsService.Models.ResponseModel;
 
 namespace VerificationsService.Controllers
 {
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("v{version:apiVersion}/")]
     public class VerificationsController : ControllerBase
     {
         private readonly ILogger<VerificationsController> _logger;
