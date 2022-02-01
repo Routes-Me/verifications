@@ -146,11 +146,24 @@ namespace MessagingService.Service
         private async Task<string> sendOTPToUser(ChallengeDto verify)
         {
             var otp = createOTPForChannel(verify.Channel);
-
-            var result = await SendSMS(verify.PhoneNumber, otp, verify.LangId);
-            if (result.Substring(0, 3) == "ERR")
-                throw new Exception(" Messaging Error : " + result.Split(":")[1]);
-            return otp;
+            try
+            {
+                if (verify.PhoneNumber.Substring(0, 3) == "965")
+                {
+                    var result = await SendSMS(verify.PhoneNumber, otp, verify.LangId);
+                    if (result.Substring(0, 3) == "ERR")
+                        throw new Exception(" Messaging Error : " + result.Split(":")[1]);
+                    return otp;
+                }
+                else
+                {
+                    throw new Exception("ErrorMessage: Please provide a valid Kuwait number!!.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("ErrorMessage: " + ex.Message);
+            }
         }
 
         private string createOTPForChannel(string channel)
