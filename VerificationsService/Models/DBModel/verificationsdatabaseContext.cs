@@ -32,14 +32,14 @@ namespace VerificationsService.Models.DBModel
                     .AddJsonFile(@Directory.GetCurrentDirectory() + "/../MessagingService/appsettings.json")
                     .Build();
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
-                optionsBuilder.UseMySql(connectionString, Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7.32-mysql"));
+                //optionsBuilder.UseMySql(connectionString, Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7.32-mysql"));
             }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasCharSet("latin1")
-                .UseCollation("latin1_swedish_ci");
+            //modelBuilder.HasCharSet("latin1")
+            //    .UseCollation("latin1_swedish_ci");
 
             modelBuilder.Entity<Challenge>(entity =>
             {
@@ -83,7 +83,7 @@ namespace VerificationsService.Models.DBModel
             {
                 entity.ToTable("sms_challenges");
 
-                entity.HasIndex(e => e.ChallengeId, "challenge_id");
+                //entity.HasIndex(e => e.ChallengeId, "challenge_id");
 
                 entity.Property(e => e.SmsChallengeId)
                     .HasColumnType("int(11)")
@@ -107,7 +107,7 @@ namespace VerificationsService.Models.DBModel
             {
                 entity.ToTable("verifications");
 
-                entity.HasIndex(e => e.ChallengeId, "challenge_id");
+                //entity.HasIndex(e => e.ChallengeId, "challenge_id");
 
                 entity.Property(e => e.VerificationId)
                     .HasColumnType("int(11)")

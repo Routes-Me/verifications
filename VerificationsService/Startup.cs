@@ -36,10 +36,10 @@ namespace VerificationsService
         {
 
             services.AddControllers();
-            var serverVersion = new MySqlServerVersion(new Version(8, 0, 25));
+            //var serverVersion = new MySqlServerVersion(new Version(8, 0, 25));
             services.AddDbContext<verificationsdatabaseContext>(options =>
             {
-                options.UseMySql(Configuration.GetConnectionString("DefaultConnection"), serverVersion);
+                options.UseMySql(Configuration.GetConnectionString("DefaultConnection"));
             });
             services.Configure<Dependencies>(Configuration.GetSection("Dependencies"));
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
@@ -48,7 +48,7 @@ namespace VerificationsService
             services.AddScoped<IVerificationService,VerificationService>();
             services.AddScoped<ITokenService, TokenService>();
 
-            services.AddApiVersioning(config =>
+             services.AddApiVersioning(config =>
             {
                 config.DefaultApiVersion = new ApiVersion(1, 0);
                 config.AssumeDefaultVersionWhenUnspecified = true;
