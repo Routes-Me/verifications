@@ -10,6 +10,7 @@ namespace VerificationsService.Abstraction
         Task<IEnumerable<T>> All();
         Task<T> GetById(int id);
         Task<T> Add(T entity);
+        Task<T> Put(T entity);
         Task<T> Delete(int id);
         Task<IEnumerable<T>> Find(Expression<Func<T, bool>> predicate);
         T Where(Expression<Func<T, bool>> predicate);

@@ -31,7 +31,13 @@ namespace VerificationsService.Repository
             return await dbSet.FindAsync(id);
         }
 
-
+        public virtual async Task<T> Put(T entity)
+        {
+            dbSet.Attach(entity);
+            context.Entry(entity).State = EntityState.Modified;
+            await context.SaveChangesAsync();
+            return entity;
+        }
 
         public virtual async Task<T> Add(T entity)
         {

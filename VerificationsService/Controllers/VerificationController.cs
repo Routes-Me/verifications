@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using RoutesSecurity;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using VerificationsService.Abstraction;
 using VerificationsService.Models.Common;
@@ -44,37 +45,55 @@ namespace VerificationsService.Controllers
                 verificationDto.challengeId = challenge_id;
                 var challenge = await _challengeRepository.GetChallengeForId(Obfuscation.Decode(verificationDto.challengeId));
 
+                if (challenge.Status == ChallengeStatus.Pending)
+                {
+                    challenge.Status = ChallengeStatus.Approved;
+                }
+
                 if (challenge == null)
                     throw new KeyNotFoundException($"The given challenge id '{challenge_id}' doesnot exist");
-
-                if (challenge.ExpiresAt < DateTime.Now)
-                    throw new SecurityTokenExpiredException(CommonMessage.TokenExpired);
-
-                var count = _verificationRepository.CheckAttemptCount(Obfuscation.Decode(challenge_id));
-                if (count >= VerificationConfig.MaxVerificationAttempts)
+                else
                 {
-                    return StatusCode(StatusCodes.Status429TooManyRequests, ReturnResponse.ErrorResponse(CommonMessage.LimitExceedException, 429));
+                    if (challenge.ExpiresAt < DateTime.Now)
+                        return StatusCode(StatusCodes.Status400BadRequest, ReturnResponse.ErrorResponse(CommonMessage.TokenExpired, 400));
+
+                    else
+                    {
+                        var count = _verificationRepository.CheckAttemptCount(Obfuscation.Decode(challenge_id));
+                        if (count >= VerificationConfig.MaxVerificationAttempts)
+                        {
+                            if (challenge.Status == ChallengeStatus.Approved)
+                            {
+                                challenge.Status = ChallengeStatus.Denied;
+                                challenge = _challengeRepository.Where(x => x.ChallengeId == Obfuscation.Decode(challenge_id));
+                                await _challengeRepository.Put(challenge);
+                            }
+                            return StatusCode(StatusCodes.Status429TooManyRequests, ReturnResponse.ErrorResponse(CommonMessage.LimitExceedException, 429));
+                        }
+                        Verification verification = new Verification
+                        {
+                            ChallengeId = challenge.ChallengeId,
+                            CreatedAt = DateTime.Now,
+                            Attempt = challenge.Code == verificationDto.otp ? VerificationStatus.successful : VerificationStatus.failure
+
+                        };
+                        await _verificationRepository.Add(verification);
+                        var verificationResponse = new VerificationResponse();
+                        if (verification.Attempt != VerificationStatus.failure)
+                        {
+                            var sms = _challengeRepository.GetSmsChallengeForChallengeId(verification.ChallengeId);
+                            verificationResponse.Token = _tokenService.GenerateVerificationTokenForNumber(sms.ReceiverNumber);
+                            verificationResponse.Status = true;
+                            verificationResponse.Code = 200;
+                            verificationResponse.Message = CommonMessage.TokenCreated;
+                        }
+                        else
+                        {
+                            return StatusCode(StatusCodes.Status400BadRequest, ReturnResponse.ErrorResponse(CommonMessage.IncorrectOTP, 400));
+                        }
+                        return StatusCode(StatusCodes.Status200OK, verificationResponse);
+                    }
                 }
-                Verification verification = new Verification
-                {
-                    ChallengeId = challenge.ChallengeId,
-                    CreatedAt = DateTime.Now,
-                    Attempt = challenge.Code == verificationDto.otp ? VerificationStatus.successful : VerificationStatus.failure
-
-                };
-                await _verificationRepository.Add(verification);
-                var verificationResponse = new VerificationResponse();
-                if (verification.Attempt != VerificationStatus.failure)
-                {
-                    var sms = _challengeRepository.GetSmsChallengeForChallengeId(verification.ChallengeId);
-                    verificationResponse.Token = _tokenService.GenerateVerificationTokenForNumber(sms.ReceiverNumber);
-                    verificationResponse.Status = true;
-                    verificationResponse.Code = 200;
-                    verificationResponse.Message = CommonMessage.TokenCreated;
-
-                }
-
-                return StatusCode(StatusCodes.Status200OK, verificationResponse);
 
             }
             catch (Exception ex)
